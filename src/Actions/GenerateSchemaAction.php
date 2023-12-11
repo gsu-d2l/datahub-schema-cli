@@ -278,7 +278,7 @@ class GenerateSchemaAction implements LoggerAwareInterface
             ),
             fn (string $v): bool => !in_array(
                 strtolower($v),
-                ['', 'about', 'returned Fields', 'available Filters'],
+                ['', 'about', 'returned fields', 'available filters'],
                 true
             )
         ));
