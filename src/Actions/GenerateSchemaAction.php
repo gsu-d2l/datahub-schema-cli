@@ -52,13 +52,16 @@ class GenerateSchemaAction implements LoggerAwareInterface
      */
     public function execute(SchemaModule $module): array
     {
-        $document = XMLMethods::loadDocument($module->getContentsPath());
-        $mainContent = $this->findMainContent($document);
-        $datasetNodes = $this->collectDatasetNodes($mainContent);
-        $datasets = $this->buildDatasetList($module, $datasetNodes);
-        $this->minifyContents($module, $document, $datasetNodes);
-
-        return $datasets;
+        return $this->buildDatasetList(
+            $module,
+            $this->collectDatasetNodes(
+                $this->findMainContent(
+                    XMLMethods::loadDocument(
+                        $module->getContentsPath()
+                    )
+                )
+            )
+        );
     }
 
 
@@ -157,50 +160,6 @@ class GenerateSchemaAction implements LoggerAwareInterface
         }
 
         return $datasetNodesList;
-    }
-
-
-    /**
-     * @param SchemaModule $module
-     * @param \DOMDocument $document
-     * @param DatasetNodes[] $datasetNodes
-     * @return void
-     */
-    private function minifyContents(
-        SchemaModule $module,
-        \DOMDocument $document,
-        array $datasetNodes
-    ): void {
-        $contents = [];
-        foreach ($datasetNodes as $datasetNode) {
-            $contents[] = $document->saveHTML($datasetNode->h2);
-            foreach ($datasetNode->p as $p) {
-                $contents[] = $document->saveHTML($p);
-            }
-            $contents[] = $document->saveHTML($datasetNode->table);
-        }
-
-        FileMethods::putContents(
-            $module->getContentsPath(),
-            implode("\r\n", [
-                '<!DOCTYPE html>',
-                '<html lang="en">',
-                '<body>',
-                '<div id="fallbackPageContent">',
-                '<main>',
-                '<section>',
-                '<div class="mainColumn">',
-                '<article>',
-                ...$contents,
-                '</article>',
-                '</div>',
-                '</section>',
-                '</main>',
-                '</div>',
-                '</body>',
-                '</html>'
-            ])
-        );
     }
 
 
