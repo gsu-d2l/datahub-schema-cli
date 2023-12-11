@@ -8,6 +8,7 @@ use GSU\D2L\DataHub\Schema\Model\ColumnSchema;
 use GSU\D2L\DataHub\Schema\Model\ColumnSchemaType;
 use GSU\D2L\DataHub\Schema\Model\DatasetSchema;
 use GSU\D2L\DataHub\Schema\Model\DatasetSchemaType;
+use mjfklib\Utils\FileMethods;
 
 class GenerateMySQLTablesAction extends GenerateSQLAction
 {
@@ -35,12 +36,12 @@ class GenerateMySQLTablesAction extends GenerateSQLAction
 
         $tableDir = $this->getTableDir();
 
-        file_put_contents(
+        FileMethods::putContents(
             "{$tableDir}/{$tableName}.sql",
             $this->generateTableSQL($dataset, $tableName)
         );
 
-        file_put_contents(
+        FileMethods::putContents(
             "{$tableDir}/{$tableName}_LOAD.sql",
             $this->generateTableSQL($dataset, $tableName . '_LOAD')
         );
@@ -64,8 +65,7 @@ class GenerateMySQLTablesAction extends GenerateSQLAction
                 ...$this->generateColumnSQL($dataset),
                 ...$this->generateIndexSQL($dataset),
             ]),
-            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
-            ""
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
         ]);
     }
 

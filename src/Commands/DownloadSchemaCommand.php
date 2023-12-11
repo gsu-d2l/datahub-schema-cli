@@ -7,7 +7,6 @@ namespace GSU\D2L\DataHub\Schema\CLI\Commands;
 use GSU\D2L\DataHub\Schema\CLI\Actions\DownloadModuleAction;
 use GSU\D2L\DataHub\Schema\CLI\Actions\GenerateSchemaAction;
 use GSU\D2L\DataHub\Schema\CLI\Model\SchemaModuleList;
-use GSU\D2L\DataHub\Schema\Model\DatasetSchema;
 use GSU\D2L\DataHub\Schema\SchemaRepository;
 use mjfklib\Console\Command\Command;
 use Symfony\Component\Console\Attribute\AsCommand;

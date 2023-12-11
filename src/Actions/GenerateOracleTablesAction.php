@@ -8,6 +8,7 @@ use GSU\D2L\DataHub\Schema\Model\ColumnSchema;
 use GSU\D2L\DataHub\Schema\Model\ColumnSchemaType;
 use GSU\D2L\DataHub\Schema\Model\DatasetSchema;
 use GSU\D2L\DataHub\Schema\Model\DatasetSchemaType;
+use mjfklib\Utils\FileMethods;
 
 class GenerateOracleTablesAction extends GenerateSQLAction
 {
@@ -35,12 +36,12 @@ class GenerateOracleTablesAction extends GenerateSQLAction
 
         $tableDir = $this->getTableDir();
 
-        file_put_contents(
+        FileMethods::putContents(
             "{$tableDir}/{$tableName}.sql",
             $this->generateTableSQL($dataset, $tableName)
         );
 
-        file_put_contents(
+        FileMethods::putContents(
             "{$tableDir}/{$tableName}_LOAD.sql",
             $this->generateTableSQL($dataset, $tableName . '_LOAD')
         );
@@ -65,7 +66,6 @@ class GenerateOracleTablesAction extends GenerateSQLAction
             ...$this->generateIndexSQL($dataset, $tableName),
             "",
             "QUIT;",
-            ""
         ]);
     }
 

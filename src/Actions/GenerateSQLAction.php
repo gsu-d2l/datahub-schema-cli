@@ -6,6 +6,9 @@ namespace GSU\D2L\DataHub\Schema\CLI\Actions;
 
 use GSU\D2L\DataHub\Schema\Model\DatasetSchemaType;
 use GSU\D2L\DataHub\Schema\SchemaRepository;
+use mjfklib\Utils\ArrayValue;
+use mjfklib\Utils\FileMethods;
+use mjfklib\Utils\JSON;
 
 abstract class GenerateSQLAction
 {
@@ -22,20 +25,12 @@ abstract class GenerateSQLAction
      */
     public function getTableMap(): array
     {
-        $contents = file_get_contents("{$this->getTableDir()}/table_map.json");
-        if (!is_string($contents)) {
-            throw new \RuntimeException("Unable to read table map file");
-        }
-
-        $tableMap = json_decode($contents, true, 2, JSON_THROW_ON_ERROR);
-        if (!is_array($tableMap)) {
-            throw new \RuntimeException("Unable to create table map");
-        }
-
-        return array_filter(
-            $tableMap,
-            fn ($v, $k) => is_string($v) && is_string($k),
-            ARRAY_FILTER_USE_BOTH
+        return ArrayValue::convertToStringArray(
+            JSON::decodeArray(
+                FileMethods::getContents(
+                    "{$this->getTableDir()}/table_map.json"
+                )
+            )
         );
     }
 

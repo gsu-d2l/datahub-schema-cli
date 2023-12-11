@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace GSU\D2L\DataHub\Schema\CLI\Model;
 
 use GSU\D2L\DataHub\Schema\Model\DatasetSchemaType;
-use mjfklib\Container\ArrayValue;
-use mjfklib\Container\ObjectFactory;
+use mjfklib\Utils\ArrayValue;
 
 class SchemaModule
 {
@@ -16,22 +15,13 @@ class SchemaModule
      */
     public static function create(mixed $values): self
     {
-        return ObjectFactory::createObject($values, self::class, [self::class, 'construct']);
-    }
-
-
-    /**
-     * @param mixed[] $values
-     * @return self
-     */
-    public static function construct(array $values): self
-    {
+        $values = ArrayValue::convertToArray($values);
         return new self(
             modulesDir: ArrayValue::getString($values, 'modulesDir'),
             type: DatasetSchemaType::getType(ArrayValue::getStringNull($values, 'type') ?? DatasetSchemaType::BDS),
             name: ArrayValue::getString($values, 'name'),
             url: ArrayValue::getString($values, 'url'),
-            datasets: ArrayValue::getStringArray(ArrayValue::getArray($values, 'datasets'))
+            datasets: ArrayValue::getStringArray($values, 'datasets')
         );
     }
 

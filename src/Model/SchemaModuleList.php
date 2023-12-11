@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace GSU\D2L\DataHub\Schema\CLI\Model;
 
 use GSU\D2L\DataHub\Schema\SchemaRepository;
-use mjfklib\Container\ArrayValue;
+use mjfklib\Utils\ArrayValue;
+use mjfklib\Utils\FileMethods;
+use mjfklib\Utils\JSON;
 
 class SchemaModuleList
 {
@@ -20,20 +22,11 @@ class SchemaModuleList
             throw new \RuntimeException("Invalid or missing modules directory");
         }
 
-        $path = "{$modulesDir}/modules.json";
-        if (!is_file($path)) {
-            throw new \RuntimeException("Missing modules.json file");
-        }
-
-        $contents = file_get_contents($path);
-        if (!is_string($contents)) {
-            throw new \RuntimeException("Unable to read modules.json");
-        }
-
-        $values = json_decode($contents, true, 16, JSON_THROW_ON_ERROR);
-        if (!is_array($values)) {
-            throw new \RuntimeException("Unable to parse modules.json");
-        }
+        $values = JSON::decodeArray(
+            FileMethods::getContents(
+                "{$modulesDir}/modules.json"
+            )
+        );
 
         return new self(
             modulesDir: $modulesDir,

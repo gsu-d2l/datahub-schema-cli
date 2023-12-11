@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace GSU\D2L\DataHub\Schema\CLI\Utils;
 
+use mjfklib\Utils\FileMethods;
+
 class XMLMethods
 {
     /**
@@ -12,13 +14,8 @@ class XMLMethods
      */
     public static function loadDocument(string $documentFile): \DOMDocument
     {
-        $contents = file_get_contents($documentFile);
-        if (!is_string($contents)) {
-            throw new \RuntimeException("Unable to read document");
-        }
-
         $document = new \DOMDocument();
-        if (!@$document->loadHTML($contents)) {
+        if (!@$document->loadHTML(FileMethods::getContents($documentFile))) {
             throw new \RuntimeException("Unable to load document");
         }
 
@@ -85,6 +82,15 @@ class XMLMethods
     }
 
 
+    /** @var array<string,string> */
+    private const CLEAN_STRING_REGEX = [
+        '/[ \t\n\r\x0b\x80\x93\xa0\xc2\xe2]+/u' => " ",
+        '/[\x{2013}]+/u'                        => "-",
+        '/[\x{2018}\x{2019}]+/u'                => "'",
+        '/[\x{201c}\x{201d}]+/u'                => "\""
+    ];
+
+
     /**
      * @param \DOMNode|string|null $value
      * @return string
@@ -93,9 +99,9 @@ class XMLMethods
     {
         $myValue = ($value instanceof \DOMNode ? $value->nodeValue : $value) ?? '';
         $myValue = preg_replace(
-            ['/[ \t\n\r\x0B\xc2\xa0]+/u', '/\x{2019}/u'],
-            [' ', "'"],
-            trim($myValue, " \t\n\r\0\x0B\xc2\xa0")
+            array_keys(self::CLEAN_STRING_REGEX),
+            array_values(self::CLEAN_STRING_REGEX),
+            trim($myValue)
         ) ?? '';
 
         if ($value instanceof \DOMNode && $value->ownerDocument instanceof \DOMDocument) {

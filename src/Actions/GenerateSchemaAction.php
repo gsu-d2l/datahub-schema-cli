@@ -10,6 +10,7 @@ use GSU\D2L\DataHub\Schema\CLI\Utils\XMLMethods;
 use GSU\D2L\DataHub\Schema\Model\DatasetSchema;
 use GSU\D2L\DataHub\Schema\Model\ColumnSchema;
 use mjfklib\Logger\LoggerAwareTrait;
+use mjfklib\Utils\FileMethods;
 use Psr\Log\LoggerAwareInterface;
 
 class GenerateSchemaAction implements LoggerAwareInterface
@@ -179,7 +180,7 @@ class GenerateSchemaAction implements LoggerAwareInterface
             $contents[] = $document->saveHTML($datasetNode->table);
         }
 
-        file_put_contents(
+        FileMethods::putContents(
             $module->getContentsPath(),
             implode("\r\n", [
                 '<!DOCTYPE html>',
