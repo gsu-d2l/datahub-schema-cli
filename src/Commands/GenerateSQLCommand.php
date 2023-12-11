@@ -7,6 +7,7 @@ namespace GSU\D2L\DataHub\Schema\CLI\Commands;
 use GSU\D2L\DataHub\Schema\CLI\Actions\GenerateSQLAction;
 use GSU\D2L\DataHub\Schema\Model\DatasetSchemaType;
 use mjfklib\Console\Command\Command;
+use mjfklib\Utils\FileMethods;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -58,7 +59,7 @@ class GenerateSQLCommand extends Command
             : throw new \RuntimeException('Invalid dataset type');
 
         if ($input->getOption('purge') === true) {
-            CommandMethods::deleteFiles("{$this->generateSQL->getTableDir()}/*.sql");
+            FileMethods::deleteFiles("{$this->generateSQL->getTableDir()}/*.sql");
         }
 
         $tableMap = $this->generateSQL->getTableMap();
