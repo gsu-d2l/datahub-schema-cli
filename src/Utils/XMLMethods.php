@@ -84,7 +84,7 @@ class XMLMethods
 
     /** @var array<string,string> */
     private const CLEAN_STRING_REGEX = [
-        '/[ \t\n\r\x0b\x80\x93\xa0\xc2\xe2]+/u' => " ",
+        '/[ \t\n\r\x{000b}\x{0080}\x{0093}\x{00a0}\x{00c2}\x{00e2}]+/u' => " ",
         '/[\x{2013}]+/u'                        => "-",
         '/[\x{2018}\x{2019}]+/u'                => "'",
         '/[\x{201c}\x{201d}]+/u'                => "\""
