@@ -98,11 +98,11 @@ class XMLMethods
     public static function getCleanString(mixed $value): string
     {
         $myValue = ($value instanceof \DOMNode ? $value->nodeValue : $value) ?? '';
-        $myValue = preg_replace(
+        $myValue = trim(preg_replace(
             array_keys(self::CLEAN_STRING_REGEX),
             array_values(self::CLEAN_STRING_REGEX),
-            trim($myValue)
-        ) ?? '';
+            $myValue
+        ) ?? '');
 
         if ($value instanceof \DOMNode && $value->ownerDocument instanceof \DOMDocument) {
             $value->nodeValue = '';
