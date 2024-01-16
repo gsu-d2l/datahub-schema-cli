@@ -2,18 +2,17 @@
 
 declare(strict_types=1);
 
-namespace GSU\D2L\DataHub\Schema\CLI\Actions;
+namespace GSU\D2L\DataHub\Schema\CLI\Download;
 
-use GSU\D2L\DataHub\Schema\CLI\Model\DatasetNodes;
-use GSU\D2L\DataHub\Schema\CLI\Model\SchemaModule;
-use GSU\D2L\DataHub\Schema\CLI\Utils\XMLMethods;
+use GSU\D2L\DataHub\Schema\CLI\Download\Model\DatasetNodes;
+use GSU\D2L\DataHub\Schema\CLI\Download\Utils\XMLMethods;
 use GSU\D2L\DataHub\Schema\Model\DatasetSchema;
 use GSU\D2L\DataHub\Schema\Model\ColumnSchema;
+use GSU\D2L\DataHub\Schema\Model\DatasetModule;
 use mjfklib\Logger\LoggerAwareTrait;
-use mjfklib\Utils\FileMethods;
 use Psr\Log\LoggerAwareInterface;
 
-class GenerateSchemaAction implements LoggerAwareInterface
+final class DatasetSchemaBuilder implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
@@ -47,18 +46,16 @@ class GenerateSchemaAction implements LoggerAwareInterface
 
 
     /**
-     * @param SchemaModule $module
+     * @param DatasetModule $module
      * @return DatasetSchema[]
      */
-    public function execute(SchemaModule $module): array
+    public function buildSchema(DatasetModule $module): array
     {
         return $this->buildDatasetList(
             $module,
             $this->collectDatasetNodes(
                 $this->findMainContent(
-                    XMLMethods::loadDocument(
-                        $module->getContentsPath()
-                    )
+                    XMLMethods::loadDocument($module->contentsPath)
                 )
             )
         );
@@ -164,12 +161,12 @@ class GenerateSchemaAction implements LoggerAwareInterface
 
 
     /**
-     * @param SchemaModule $module
+     * @param DatasetModule $module
      * @param DatasetNodes[] $datasetNodesList
      * @return DatasetSchema[]
      */
     private function buildDatasetList(
-        SchemaModule $module,
+        DatasetModule $module,
         array $datasetNodesList
     ): array {
         $datasets = [];

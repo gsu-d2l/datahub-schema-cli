@@ -2,58 +2,28 @@
 
 declare(strict_types=1);
 
-namespace GSU\D2L\DataHub\Schema\CLI\Actions;
+namespace GSU\D2L\DataHub\Schema\CLI\GenerateSQL;
 
 use GSU\D2L\DataHub\Schema\Model\ColumnSchema;
 use GSU\D2L\DataHub\Schema\Model\ColumnSchemaType;
 use GSU\D2L\DataHub\Schema\Model\DatasetSchema;
-use GSU\D2L\DataHub\Schema\Model\DatasetSchemaType;
-use mjfklib\Utils\FileMethods;
+use GSU\D2L\DataHub\Schema\Model\SQLType;
 
-class GenerateMySQLTablesAction extends GenerateSQLAction
+final class MySQLTableGenerator implements SQLTableGeneratorInterface
 {
     /**
-     * @return string
+     * @return SQLType
      */
-    public function getTableDir(): string
+    public function getSqlType(): SQLType
     {
-        return "{$this->schemaRepository->getSchemaDir()}/mysql";
+        return SQLType::MYSQL;
     }
 
 
     /**
-     * @param DatasetSchemaType $type
-     * @param string $datasetName
-     * @param string $tableName
-     * @return void
+     * @inheritdoc
      */
     public function generateTable(
-        DatasetSchemaType $type,
-        string $datasetName,
-        string $tableName
-    ): void {
-        $dataset = $this->schemaRepository->fetch($type, $datasetName);
-
-        $tableDir = $this->getTableDir();
-
-        FileMethods::putContents(
-            "{$tableDir}/{$tableName}.sql",
-            $this->generateTableSQL($dataset, $tableName)
-        );
-
-        FileMethods::putContents(
-            "{$tableDir}/{$tableName}_LOAD.sql",
-            $this->generateTableSQL($dataset, $tableName . '_LOAD')
-        );
-    }
-
-
-    /**
-     * @param DatasetSchema $dataset
-     * @param string $tableName
-     * @return string
-     */
-    private function generateTableSQL(
         DatasetSchema $dataset,
         string $tableName
     ): string {

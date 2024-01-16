@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace GSU\D2L\DataHub\Schema\CLI\Utils;
+namespace GSU\D2L\DataHub\Schema\CLI\Download\Utils;
 
 use mjfklib\Utils\FileMethods;
 
-class XMLMethods
+final class XMLMethods
 {
     /**
      * @param string $documentFile

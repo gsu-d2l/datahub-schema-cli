@@ -2,16 +2,20 @@
 
 declare(strict_types=1);
 
-namespace GSU\D2L\DataHub\Schema\CLI\Actions;
+namespace GSU\D2L\DataHub\Schema\CLI\Download;
 
-use GSU\D2L\DataHub\Schema\CLI\Model\SchemaModule;
+use GSU\D2L\DataHub\Schema\Model\DatasetModule;
 use mjfklib\HttpClient\HttpClientMethods;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestFactoryInterface;
 
-class DownloadModuleAction
+final class DatasetModuleDownloader
 {
+    /**
+     * @param ClientInterface $httpClient
+     * @param ServerRequestFactoryInterface $requestFactory
+     */
     public function __construct(
         private ClientInterface $httpClient,
         private ServerRequestFactoryInterface $requestFactory
@@ -20,14 +24,14 @@ class DownloadModuleAction
 
 
     /**
-     * @param SchemaModule $module
-     * @return SchemaModule
+     * @param DatasetModule $module
+     * @return DatasetModule
      */
-    public function execute(SchemaModule $module): SchemaModule
+    public function download(DatasetModule $module): DatasetModule
     {
         $bytes = HttpClientMethods::writeResponseToFile(
             $this->getContents($module->url),
-            $module->getContentsPath()
+            $module->contentsPath
         );
 
         if ($bytes < 1) {
@@ -42,7 +46,7 @@ class DownloadModuleAction
      * @param string $url
      * @return ResponseInterface
      */
-    protected function getContents(string $url): ResponseInterface
+    private function getContents(string $url): ResponseInterface
     {
         $response = $this->httpClient->sendRequest(
             $this->requestFactory->createServerRequest(

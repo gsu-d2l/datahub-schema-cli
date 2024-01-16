@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace GSU\D2L\DataHub\Schema\CLI\Actions;
+namespace GSU\D2L\DataHub\Schema\CLI\Download;
 
 use GSU\D2L\DataHub\Schema\Model\ColumnSchema;
 use GSU\D2L\DataHub\Schema\Model\DatasetSchema;
 
-class GenerateModuleHTMLAction
+final class DatasetModuleContentBuilder
 {
     /**
      * @param DatasetSchema[] $datasets
      * @return string
      */
-    public function execute(array $datasets): string
+    public function buildContent(array $datasets): string
     {
         return implode(PHP_EOL, [
             '<!DOCTYPE html>',

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace GSU\D2L\DataHub\Schema\CLI\Model;
+namespace GSU\D2L\DataHub\Schema\CLI\Download\Model;
 
-class DatasetNodes
+final class DatasetNodes
 {
     /**
      * @param \DOMNode $h2
