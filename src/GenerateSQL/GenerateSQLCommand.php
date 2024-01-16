@@ -123,7 +123,6 @@ final class GenerateSQLCommand extends Command
                     )
                 );
             } catch (\Throwable $t) {
-                var_dump($this->logger !== null);
                 $this->logError(
                     $input,
                     new \RuntimeException(
