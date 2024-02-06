@@ -61,6 +61,29 @@ final class DownloadSchemaCommand extends Command
                 list($module, $newModule) = $this->getModule($moduleName);
 
                 $datasets = $this->schemaBuilder->buildSchema($module);
+
+                if ($newModule) {
+                    FileMethods::putContents(
+                        $module->contentsPath,
+                        $this->moduleContentBuilder->buildContent($datasets)
+                    );
+                }
+
+                foreach ($module->datasets as $datasetName) {
+                    $found = false;
+                    foreach ($datasets as $dataset) {
+                        if ($dataset->name === $datasetName) {
+                            $found = true;
+                            break;
+                        }
+                    }
+                    if (!$found) {
+                        $this->logger?->notice(
+                            "Dataset '{$datasetName}' is listed in module '{$module->name}' but not found in output"
+                        );
+                    }
+                }
+
                 foreach ($datasets as $dataset) {
                     try {
                         $this->schemaRepository->storeDataset($dataset);
@@ -71,13 +94,6 @@ final class DownloadSchemaCommand extends Command
                             $t
                         );
                     }
-                }
-
-                if ($newModule) {
-                    FileMethods::putContents(
-                        $module->contentsPath,
-                        $this->moduleContentBuilder->buildContent($datasets)
-                    );
                 }
             } catch (\Throwable $t) {
                 $this->logError(
