@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace GSU\D2L\DataHub\Schema\CLI\Download;
 
 use GSU\D2L\DataHub\Schema\Model\DatasetModule;
+use GSU\D2L\DataHub\Schema\Model\DatasetSchema;
 use GSU\D2L\DataHub\Schema\SchemaRepositoryInterface;
 use mjfklib\Console\Command\Command;
 use mjfklib\Utils\FileMethods;
@@ -19,7 +20,6 @@ final class DownloadSchemaCommand extends Command
     public function __construct(
         private SchemaRepositoryInterface $schemaRepository,
         private DatasetModuleDownloader $moduleDownloader,
-        private DatasetSchemaBuilder $schemaBuilder,
         private DatasetModuleContentBuilder $moduleContentBuilder,
     ) {
         parent::__construct(false, true);
@@ -58,43 +58,7 @@ final class DownloadSchemaCommand extends Command
         $modules = $this->schemaRepository->listModules();
         foreach ($modules as $moduleName) {
             try {
-                list($module, $newModule) = $this->getModule($moduleName);
-
-                $datasets = $this->schemaBuilder->buildSchema($module);
-
-                if ($newModule) {
-                    FileMethods::putContents(
-                        $module->contentsPath,
-                        $this->moduleContentBuilder->buildContent($datasets)
-                    );
-                }
-
-                foreach ($module->datasets as $datasetName) {
-                    $found = false;
-                    foreach ($datasets as $dataset) {
-                        if ($dataset->name === $datasetName) {
-                            $found = true;
-                            break;
-                        }
-                    }
-                    if (!$found) {
-                        $this->logger?->notice(
-                            "Dataset '{$datasetName}' is listed in module '{$module->name}' but not found in output"
-                        );
-                    }
-                }
-
-                foreach ($datasets as $dataset) {
-                    try {
-                        $this->schemaRepository->storeDataset($dataset);
-                    } catch (\Throwable $t) {
-                        throw new \RuntimeException(
-                            "Error storing dataset: {$dataset->name}",
-                            0,
-                            $t
-                        );
-                    }
-                }
+                $this->processModule($moduleName);
             } catch (\Throwable $t) {
                 $this->logError(
                     $input,
@@ -113,9 +77,46 @@ final class DownloadSchemaCommand extends Command
 
     /**
      * @param string $moduleName
-     * @return array{DatasetModule,bool}
+     * @return void
      */
-    private function getModule(string $moduleName): array
+    private function processModule(string $moduleName): void
+    {
+        list($module, $datasets) = $this->getSchema($moduleName);
+
+        foreach ($module->datasets as $datasetName) {
+            $found = false;
+            foreach ($datasets as $dataset) {
+                if ($dataset->name === $datasetName) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                $this->logger?->notice(
+                    "Dataset '{$datasetName}' is listed in module '{$module->name}' but not found in output"
+                );
+            }
+        }
+
+        foreach ($datasets as $dataset) {
+            try {
+                $this->schemaRepository->storeDataset($dataset);
+            } catch (\Throwable $t) {
+                throw new \RuntimeException(
+                    "Error storing dataset: {$dataset->name}",
+                    0,
+                    $t
+                );
+            }
+        }
+    }
+
+
+    /**
+     * @param string $moduleName
+     * @return array{0:DatasetModule,1:DatasetSchema[]}
+     */
+    private function getSchema(string $moduleName): array
     {
         $module = $this->schemaRepository->fetchModule($moduleName);
 
@@ -127,6 +128,15 @@ final class DownloadSchemaCommand extends Command
             throw new \RuntimeException("Module contents not found: {$module->contentsPath}");
         }
 
-        return [$module, $newModule];
+        $datasets = DatasetSchemaBuilder::buildSchema($module);
+
+        if ($newModule) {
+            FileMethods::putContents(
+                $module->contentsPath,
+                $this->moduleContentBuilder->buildContent($datasets)
+            );
+        }
+
+        return [$module, $datasets];
     }
 }

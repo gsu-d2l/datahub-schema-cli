@@ -7,7 +7,8 @@
     "ext-dom": "*",
     "mjfklib/console": "^1.0",
     "mjfklib/httpclient": "^1.0",
-    "gsu-d2l/datahub-schema": "@dev"
+    "gsu-d2l/datahub-schema": "@dev",
+    "paquettg/php-html-parser": "^2.2"
   },
   "require-dev": {
     "phpstan/extension-installer": "^1.3",

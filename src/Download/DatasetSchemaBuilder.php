@@ -49,31 +49,51 @@ final class DatasetSchemaBuilder implements LoggerAwareInterface
      * @param DatasetModule $module
      * @return DatasetSchema[]
      */
-    public function buildSchema(DatasetModule $module): array
+    public static function buildSchema(DatasetModule $module): array
     {
-        return $this->buildDatasetList(
-            $module,
-            $this->collectDatasetNodes(
-                $this->findMainContent(
-                    XMLMethods::loadDocument($module->contentsPath)
-                )
-            )
-        );
+        return (new self($module))
+            ->loadDocument()
+            ->findMainNode()
+            ->collectDatasetNodes()
+            ->buildDatasetList();
+    }
+
+
+    private \DOMDocument $document;
+    private \DOMNode $mainNode;
+    /** @var DatasetNodes[] $datasetNodes */
+    private array $datasetNodes;
+
+
+    /**
+     * @param DatasetModule $module
+     */
+    public function __construct(private DatasetModule $module)
+    {
     }
 
 
     /**
-     * @param \DOMDocument $document
-     * @return \DOMNode
+     * @return self
      */
-    private function findMainContent(\DOMDocument $document): \DOMNode
+    public function loadDocument(): self
+    {
+        $this->document = XMLMethods::loadDocument($this->module->contentsPath);
+        return $this;
+    }
+
+
+    /**
+     * @return self
+     */
+    public function findMainNode(): self
     {
         // Collect all nodes at path '#fallbackPageContent > main > section > div'
         $nodes = XMLMethods::findChildrenByName(
             XMLMethods::findChildByName(
                 XMLMethods::findChildByName(
                     XMLMethods::findById(
-                        $document,
+                        $this->document,
                         'fallbackPageContent'
                     ),
                     'main'
@@ -93,10 +113,11 @@ final class DatasetSchemaBuilder implements LoggerAwareInterface
                         && str_contains($attr->nodeValue ?? '', "mainColumn")
                     ) {
                         // Return first <article> child node
-                        return XMLMethods::findChildByName(
+                        $this->mainNode = XMLMethods::findChildByName(
                             $node,
                             'article'
                         );
+                        return $this;
                     }
                 }
             }
@@ -107,17 +128,16 @@ final class DatasetSchemaBuilder implements LoggerAwareInterface
 
 
     /**
-     * @param \DOMNode $mainContent
-     * @return DatasetNodes[]
+     * @return self
      */
-    private function collectDatasetNodes(\DOMNode $mainContent): array
+    public function collectDatasetNodes(): self
     {
-        $datasetNodesList = [];
+        $this->datasetNodes = [];
         $current = null;
 
         // Foreach child node of main content node
-        for ($idx = 0; $idx < $mainContent->childNodes->length; $idx++) {
-            $item = $mainContent->childNodes->item($idx);
+        for ($idx = 0; $idx < $this->mainNode->childNodes->length; $idx++) {
+            $item = $this->mainNode->childNodes->item($idx);
             if (!$item instanceof \DOMNode || $item->nodeType !== XML_ELEMENT_NODE) {
                 continue;
             }
@@ -144,8 +164,9 @@ final class DatasetSchemaBuilder implements LoggerAwareInterface
                     }
                     break;
                 case 'table':
-                    if (is_array($current)) {
-                        $datasetNodesList[] = new DatasetNodes(
+                    /** @var array{h2:\DOMNode,p:\DOMNode[]}|null $current */
+                    if (is_array($current) && count(XMLMethods::findChildrenByName($item, 'thead')) > 0) {
+                        $this->datasetNodes[] = new DatasetNodes(
                             $current['h2'],
                             $current['p'],
                             $item
@@ -156,34 +177,33 @@ final class DatasetSchemaBuilder implements LoggerAwareInterface
             }
         }
 
-        return $datasetNodesList;
+        return $this;
     }
 
 
     /**
-     * @param DatasetModule $module
-     * @param DatasetNodes[] $datasetNodesList
      * @return DatasetSchema[]
      */
-    private function buildDatasetList(
-        DatasetModule $module,
-        array $datasetNodesList
-    ): array {
+    public function buildDatasetList(): array
+    {
         $datasets = [];
-        foreach ($datasetNodesList as $datasetNodes) {
+        foreach ($this->datasetNodes as $datasetNodes) {
             $name = XMLMethods::getCleanString($datasetNodes->h2);
-
-            // Skip any definitions that aren't in the module list
-            if (!in_array($name, $module->datasets, true)) {
-                $this->logger?->notice("Dataset '{$name}' is not listed in module '{$module->name}'; Skipping");
-                continue;
-            }
-
             $datasets[] = new DatasetSchema(
-                type: $module->type,
+                type: $this->module->type,
                 name: $name,
-                url: $this->getDatasetURL($module->url, $name),
-                description: $this->getDatasetDescription($datasetNodes->p),
+                url: $this->module->url . '#' . str_replace(' ', '-', strtolower($name)),
+                description: implode(" ", array_filter(
+                    array_map(
+                        fn(\DOMNode $node) => XMLMethods::getCleanString($node),
+                        $datasetNodes->p
+                    ),
+                    fn(string $v): bool => !in_array(
+                        strtolower($v),
+                        ['', 'about', 'returned fields', 'available filters'],
+                        true
+                    )
+                )),
                 columns: $this->getDatasetColumns($datasetNodes->table)
             );
         }
@@ -205,39 +225,6 @@ final class DatasetSchemaBuilder implements LoggerAwareInterface
             }
         }
         return true;
-    }
-
-
-    /**
-     * @param string $url
-     * @param string $name
-     * @return string
-     */
-    private function getDatasetURL(
-        string $url,
-        string $name
-    ): string {
-        return $url . '#' . str_replace(' ', '-', strtolower($name));
-    }
-
-
-    /**
-     * @param \DOMNode[] $p
-     * @return string
-     */
-    private function getDatasetDescription(array $p): string
-    {
-        return implode(" ", array_filter(
-            array_map(
-                fn (\DOMNode $node) => XMLMethods::getCleanString($node),
-                $p
-            ),
-            fn (string $v): bool => !in_array(
-                strtolower($v),
-                ['', 'about', 'returned fields', 'available filters'],
-                true
-            )
-        ));
     }
 
 
@@ -269,10 +256,10 @@ final class DatasetSchemaBuilder implements LoggerAwareInterface
                 $p = XMLMethods::findChildrenByName($tableCell, 'p');
                 $tableRowValues[$columnMap[$idx]] = implode(" ", array_filter(
                     array_map(
-                        fn (\DOMNode $n) => XMLMethods::getCleanString($n),
+                        fn(\DOMNode $n) => XMLMethods::getCleanString($n),
                         (count($p) > 0) ? $p : [$tableCell]
                     ),
-                    fn ($p) => $p !== ''
+                    fn($p) => $p !== ''
                 ));
             }
 
